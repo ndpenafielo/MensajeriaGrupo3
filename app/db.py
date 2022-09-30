@@ -1,4 +1,4 @@
-from pysqlcipher3 import dbapi2 as sqlite3
+import sqlite3
 from . import dbc
 
 import click
@@ -11,10 +11,8 @@ def get_db():
             current_app.config['DATABASE'],
             detect_types=sqlite3.PARSE_DECLTYPES
         )
-        g.db.row_factory = sqlite3.Row
-
-    command = 'pragma key="{}"'.format(dbc.DBP)
-    g.db.execute(command)
+        g.db.row_factory = sqlite3.Row 
+    
     return g.db
 
 
@@ -30,8 +28,8 @@ def init_db():
 
     with current_app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
-
-
+ 
+    
 @click.command('init-db')
 @with_appcontext
 def init_db_command():

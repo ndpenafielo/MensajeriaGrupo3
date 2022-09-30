@@ -206,7 +206,7 @@ def forgot():
             return redirect(url_for('inbox.show'))
 
         if request.method == 'POST':
-            email = username = request.form['email']
+            email = request.form['email']
 
             if (email.len <= 0 or (not utils.isEmailValid(email))):
                 error = 'Email Address Invalid'
