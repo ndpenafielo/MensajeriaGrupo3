@@ -16,7 +16,7 @@ from app.db import get_db
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-@bp.route('/activate', methods=('GET', 'POST'))
+@bp.route('/activate',  methods=["POST"])
 def activate():
     try:
         if g.user:
@@ -35,7 +35,7 @@ def activate():
                     'UPDATE activationlink SET state = ? WHERE id = ?', (utils.U_CONFIRMED, attempt['id'])
                 )
                 db.execute(
-                    'INSERT INTO usuariosfinales (id, username, password, salt, email) VALUES (NULL, ?, ?, ?, ?)', (attempt['username'], attempt['password'], attempt['salt'], attempt['email'])
+                    'INSERT INTO user (id, username, password, salt, email) VALUES (NULL, ?, ?, ?, ?)', (attempt['username'], attempt['password'], attempt['salt'], attempt['email'])
                 )
                 db.commit()
 
@@ -45,7 +45,7 @@ def activate():
         return redirect(url_for('auth.login'))
 
 
-@bp.route('/register', methods='post')
+@bp.route('/register',  methods=["POST"])
 def register():
     try:
         if g.user:
@@ -120,7 +120,7 @@ def register():
         return render_template('auth/register.html')
 
 
-@bp.route('/confirm', methods='POST')
+@bp.route('/confirm',  methods=["POST"])
 def confirm():
     try:
         if g.user:
@@ -154,17 +154,17 @@ def confirm():
 
             db = get_db
             attempt = db.execute(
-                QUERY, (authid, utils.F_ACTIVE)
+                'SELECT * FROM forgotlink WHERE id = ?, state =?', (authid, utils.F_ACTIVE)
             ).fetchone()
 
             if attempt is not None:
                 db.execute(
-                    QUERY, (utils.F_INACTIVE, attempt['id'])
+                    'UPDATE forgotlink SET state = ? WHERE id = ?', (utils.F_INACTIVE, attempt['id'])
                 )
                 salt = hex(random.getrandbits(128))[2:]
                 hashP = generate_password_hash(password + salt)
                 db.execute(
-                    QUERY, (hashP, salt, attempt['userid'])
+                    'UPDATE user SET password = ?, salt = ? WHERE id = ?', (hashP, salt, attempt['userid'])
                 )
                 db.commit()
                 return redirect(url_for('auth.login'))
@@ -177,7 +177,7 @@ def confirm():
         return render_template('auth/forgot.html')
 
 
-@bp.route('/change', methods=('GET', 'POST'))
+@bp.route('/change',  methods=["POST"])
 def change():
     try:
         if g.user:
@@ -199,7 +199,7 @@ def change():
         return render_template('auth/forgot.html')
 
 
-@bp.route('/forgot', methods=('GET', 'POST'))
+@bp.route('/forgot',  methods=["POST"])
 def forgot():
     try:
         if g.user:
@@ -215,18 +215,18 @@ def forgot():
 
             db = get_db()
             user = db.execute(
-                QUERY, (email,)
+                'SELECT * FROM user WHERE email = ?', (email,)
             ).fetchone()
 
             if user is not None:
                 number = hex(random.getrandbits(512))[2:]
 
                 db.execute(
-                    QUERY,
+                    'UPDATE user SET state = ? WHERE id = ?',
                     (utils.F_INACTIVE, user['id'])
                 )
                 db.execute(
-                    QUERY,
+                    'INSERT INTO forgotlink (id, userid, challenge, state) VALUES (NULL, ?, ?, ?)',
                     (user['id'], number, utils.F_ACTIVE)
                 )
                 db.commit()
@@ -249,7 +249,7 @@ def forgot():
         return render_template('auth/forgot.html')
 
 
-@bp.route('/login', methods='POST')
+@bp.route('/login',  methods=["POST"])
 def login():
     try:
         if g.user:
