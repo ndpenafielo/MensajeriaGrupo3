@@ -16,9 +16,9 @@ def getDB():
 @bp.route('/show')
 @login_required
 def show():
-    db = get_db
+    db = get_db()
     messages = db.execute(
-        'SELECT * FROM message'
+        'SELECT * FROM message WHERE to_id = ?', (g.user['id'],)
     ).fetchall()
 
     return render_template('inbox/show.html', messages=messages)
@@ -33,7 +33,7 @@ def send():
         subject = request.form['subject']
         body = request.form['body']
 
-        db = get_db
+        db = get_db()
 
         if not to_username:
             flash('To field is required')
@@ -60,10 +60,10 @@ def send():
         if error is not None:
             flash(error)
         else:
-            db = get_db
+            db = get_db()
             db.execute(
                 'INSERT INTO message (id, from_id, to_id, subject, body) VALUES (NULL, ?, ?, ?, ?)',
-                (g.user['id'], userto['id'], subject, body)
+                (from_id, userto['id'], subject, body)
             )
             db.commit()
 

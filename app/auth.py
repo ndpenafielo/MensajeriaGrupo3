@@ -16,18 +16,17 @@ from app.db import get_db
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-@bp.route('/activate',  methods=["POST"])
+@bp.route('/activate',  methods=["GET","POST"])
 def activate():
     try:
         if g.user:
             return redirect(url_for('inbox.show'))
 
-        if request.method == 'POST':
+        if request.method == "GET":
             number = request.args['auth']
-
-            db = get_db
+            db = get_db()
             attempt = db.execute(
-                'SELECT * FROM activationlink WHERE id = ?, state =?', (number, utils.U_UNCONFIRMED)
+                'SELECT * FROM activationlink WHERE challenge = ? AND state =?', (number, utils.U_UNCONFIRMED)
             ).fetchone()
 
             if attempt is not None:
@@ -45,18 +44,18 @@ def activate():
         return redirect(url_for('auth.login'))
 
 
-@bp.route('/register',  methods=["POST"])
+@bp.route('/register', methods=["GET","POST"])
 def register():
     try:
         if g.user:
             return redirect(url_for('inbox.show'))
 
-        if request.method == 'post':
+        if request.method == "POST":
             username = request.form['username']
             password = request.form['password']
             email = request.form['email']
 
-            db = get_db
+            db = get_db()
             error = None
 
             if not username:
@@ -68,17 +67,19 @@ def register():
                 error = "Username should be alphanumeric plus '.','_','-'"
                 flash(error)
                 return render_template('auth/register.html')
-
+            
             if not password:
                 error = 'Password is required.'
                 flash(error)
                 return render_template('auth/register.html')
 
-            if db.execute('SELECT id FROM user WHERE username = ?', (username,)).fetchone() is not None:
+            user = db.execute('SELECT id FROM user WHERE username = ?', (username,)).fetchone()
+            print(user)
+            if user is not None:
                 error = 'User {} is already registered.'.format(username)
                 flash(error)
                 return render_template('auth/register.html')
-
+            
             if (not email or (not utils.isEmailValid(email))):
                 error =  'Email address invalid.'
                 flash(error)
@@ -88,7 +89,7 @@ def register():
                 error =  'Email {} is already registered.'.format(email)
                 flash(error)
                 return render_template('auth/register.html')
-
+            
             if (not utils.isPasswordValid(password)):
                 error = 'Password should contain at least a lowercase letter, an uppercase letter and a number with 8 characters long'
                 flash(error)
@@ -120,7 +121,7 @@ def register():
         return render_template('auth/register.html')
 
 
-@bp.route('/confirm',  methods=["POST"])
+@bp.route('/confirm', methods=["GET","POST"])
 def confirm():
     try:
         if g.user:
@@ -130,6 +131,8 @@ def confirm():
             password = request.form['password']
             password1 = request.form['password1']
             authid = request.form['authid']
+            print("1")
+            print(authid)
 
             if not authid:
                 flash('Invalid')
@@ -152,9 +155,9 @@ def confirm():
                 flash(error)
                 return render_template('auth/change.html', number=authid)
 
-            db = get_db
+            db = get_db()
             attempt = db.execute(
-                'SELECT * FROM forgotlink WHERE id = ?, state =?', (authid, utils.F_ACTIVE)
+                'SELECT * FROM forgotlink WHERE challenge = ? AND state =?', (authid, utils.F_ACTIVE)
             ).fetchone()
 
             if attempt is not None:
@@ -177,18 +180,17 @@ def confirm():
         return render_template('auth/forgot.html')
 
 
-@bp.route('/change',  methods=["POST"])
+@bp.route('/change', methods=["GET","POST"])
 def change():
     try:
         if g.user:
             return redirect(url_for('inbox.show'))
 
-        if request.method == 'POST':
+        if request.method == 'GET':
             number = request.args['auth']
-
-            db = get_db
+            db = get_db()
             attempt = db.execute(
-                'SELECT * FROM user WHERE id = ?, salt =?', (number, utils.F_ACTIVE) # REVISAR!!!
+                  'SELECT * FROM forgotlink WHERE challenge = ? AND state = ?' , (number, utils.F_ACTIVE) 
             ).fetchone()
 
             if attempt is not None:
@@ -199,7 +201,7 @@ def change():
         return render_template('auth/forgot.html')
 
 
-@bp.route('/forgot',  methods=["POST"])
+@bp.route('/forgot', methods=["GET","POST"])
 def forgot():
     try:
         if g.user:
@@ -208,7 +210,7 @@ def forgot():
         if request.method == 'POST':
             email = request.form['email']
 
-            if (email.len <= 0 or (not utils.isEmailValid(email))):
+            if (not email or (not utils.isEmailValid(email))):
                 error = 'Email Address Invalid'
                 flash(error)
                 return render_template('auth/forgot.html')
@@ -222,7 +224,7 @@ def forgot():
                 number = hex(random.getrandbits(512))[2:]
 
                 db.execute(
-                    'UPDATE user SET state = ? WHERE id = ?',
+                    'UPDATE user SET salt = ? WHERE id = ?',
                     (utils.F_INACTIVE, user['id'])
                 )
                 db.execute(
@@ -238,7 +240,6 @@ def forgot():
                 content = 'Hello there, to change your password, please click on this link ' + flask.url_for('auth.change', _external=True) + '?auth=' + number
 
                 send_email(credentials, receiver=email, subject='New Password', message=content)
-
                 flash('Please check in your registered email')
             else:
                 error = 'Email is not registered'
@@ -249,7 +250,7 @@ def forgot():
         return render_template('auth/forgot.html')
 
 
-@bp.route('/login',  methods=["POST"])
+@bp.route('/login', methods=["GET","POST"])
 def login():
     try:
         if g.user:
@@ -259,17 +260,17 @@ def login():
             username = request.form['username']
             password = request.form['password']
 
-            if username.len <= 0:
+            if not username:
                 error = 'Username Field Required'
                 flash(error)
                 return render_template('auth/login.html')
-
-            if password.len <= 0:
+            
+            if not password:
                 error = 'Password Field Required'
                 flash(error)
                 return render_template('auth/login.html')
 
-            db = get_db
+            db = get_db()
             error = None
             user = db.execute(
                 'SELECT * FROM user WHERE username = ?', (username,)
@@ -282,9 +283,8 @@ def login():
 
             if error is None:
                 session.clear()
-                session['user_id'] = user[0]
+                session['user_id'] = user[1]
                 return redirect(url_for('inbox.show'))
-
             flash(error)
 
         return render_template('auth/login.html')
@@ -300,7 +300,7 @@ def load_logged_in_user():
         g.user = None
     else:
         g.user = get_db().execute(
-            'SELECT * FROM user WHERE username = ?', (user_id,) #REVISAR!!!
+            'SELECT * FROM user WHERE username = ?', (user_id,)
         ).fetchone()
 
 
