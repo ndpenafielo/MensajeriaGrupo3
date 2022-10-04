@@ -37,6 +37,7 @@ CREATE TABLE activationlink (
 CREATE TABLE message (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   from_id INTEGER NOT NULL,
+  from_user TEXT NOT NULL,
   to_id INTEGER NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   subject TEXT NOT NULL,
@@ -52,4 +53,4 @@ CREATE TABLE credentials(
   password TEXT NOT NULL
 );
 
-INSERT INTO credentials (name,user,password) VALUES ('EMAIL_APP','XXXX@uninorte.edu.co', 'CONTRASEÑA');
+INSERT INTO credentials (name,user,password) VALUES ('EMAIL_APP','XXXXX@uninorte.edu.co', 'PASSWORD');

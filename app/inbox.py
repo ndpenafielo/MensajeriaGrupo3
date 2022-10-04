@@ -29,6 +29,7 @@ def show():
 def send():
     if request.method == 'POST':
         from_id = g.user['id']
+        from_user = g.user['username']
         to_username = request.form['to']
         subject = request.form['subject']
         body = request.form['body']
@@ -62,8 +63,8 @@ def send():
         else:
             db = get_db()
             db.execute(
-                'INSERT INTO message (id, from_id, to_id, subject, body) VALUES (NULL, ?, ?, ?, ?)',
-                (from_id, userto['id'], subject, body)
+                'INSERT INTO message (id, from_id, from_user, to_id, subject, body) VALUES (NULL, ?, ?, ?, ?, ?)',
+                (from_id, from_user, userto['id'], subject, body)
             )
             db.commit()
 
