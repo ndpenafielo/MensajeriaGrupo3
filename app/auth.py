@@ -74,7 +74,7 @@ def register():
                 return render_template('auth/register.html')
 
             user = db.execute('SELECT id FROM user WHERE username = ?', (username,)).fetchone()
-            print(user)
+
             if user is not None:
                 error = 'User {} is already registered.'.format(username)
                 flash(error)
@@ -222,11 +222,11 @@ def forgot():
 
             if user is not None:
                 number = hex(random.getrandbits(512))[2:]
-
-                db.execute(
-                    'UPDATE user SET salt = ? WHERE id = ?',
-                    (utils.F_INACTIVE, user['id'])
-                )
+                if db.execute('SELECT * FROM forgotlink WHERE userid = ? AND state = ?',(user['id'], utils.F_ACTIVE)).fetchone() is not None:
+                    db.execute(
+                    'UPDATE forgotlink SET state = ? WHERE userid = ? AND state = ?',
+                    (utils.F_INACTIVE, user['id'], utils.F_ACTIVE )
+                    )
                 db.execute(
                     'INSERT INTO forgotlink (id, userid, challenge, state) VALUES (NULL, ?, ?, ?)',
                     (user['id'], number, utils.F_ACTIVE)
