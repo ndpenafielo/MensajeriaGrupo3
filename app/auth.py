@@ -67,7 +67,7 @@ def register():
                 error = "Username should be alphanumeric plus '.','_','-'"
                 flash(error)
                 return render_template('auth/register.html')
-            
+
             if not password:
                 error = 'Password is required.'
                 flash(error)
@@ -79,7 +79,7 @@ def register():
                 error = 'User {} is already registered.'.format(username)
                 flash(error)
                 return render_template('auth/register.html')
-            
+
             if (not email or (not utils.isEmailValid(email))):
                 error =  'Email address invalid.'
                 flash(error)
@@ -89,7 +89,7 @@ def register():
                 error =  'Email {} is already registered.'.format(email)
                 flash(error)
                 return render_template('auth/register.html')
-            
+
             if (not utils.isPasswordValid(password)):
                 error = 'Password should contain at least a lowercase letter, an uppercase letter and a number with 8 characters long'
                 flash(error)
@@ -131,8 +131,6 @@ def confirm():
             password = request.form['password']
             password1 = request.form['password1']
             authid = request.form['authid']
-            print("1")
-            print(authid)
 
             if not authid:
                 flash('Invalid')
@@ -190,7 +188,7 @@ def change():
             number = request.args['auth']
             db = get_db()
             attempt = db.execute(
-                  'SELECT * FROM forgotlink WHERE challenge = ? AND state = ?' , (number, utils.F_ACTIVE) 
+                  'SELECT * FROM forgotlink WHERE challenge = ? AND state = ?' , (number, utils.F_ACTIVE)
             ).fetchone()
 
             if attempt is not None:
@@ -264,7 +262,7 @@ def login():
                 error = 'Username Field Required'
                 flash(error)
                 return render_template('auth/login.html')
-            
+
             if not password:
                 error = 'Password Field Required'
                 flash(error)

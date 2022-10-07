@@ -43,7 +43,7 @@ CREATE TABLE message (
   subject TEXT NOT NULL,
   body TEXT NOT NULL,
   FOREIGN KEY (from_id) REFERENCES user (id),
-  FOREIGN KEY (to_id) REFERENCES user (id)  
+  FOREIGN KEY (to_id) REFERENCES user (id)
 );
 
 CREATE TABLE credentials(
@@ -53,4 +53,4 @@ CREATE TABLE credentials(
   password TEXT NOT NULL
 );
 
-INSERT INTO credentials (name,user,password) VALUES ('EMAIL_APP','XXXXX@uninorte.edu.co', 'PASSWORD');
+INSERT INTO credentials (name,user,password) VALUES ('EMAIL_APP','xxxxxx@uninorte.edu.co', 'CONTRASEÑA');
